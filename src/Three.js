@@ -1,6 +1,18 @@
 import React, { Component } from "react";
 import * as THREE from "three";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+const textures = [
+  'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/crate.gif',
+  'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/brick_bump.jpg',
+  'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/metal.jpg'
+];
+
+function randomTexture() {
+  const cnt = Math.floor(Math.random()*textures.length)
+  console.log('cnt', cnt)
+  return textures[cnt]
+}
 class ThreeComp extends Component {
 
   componentDidMount() {
@@ -13,20 +25,29 @@ class ThreeComp extends Component {
     //(field of view(degrees), aspect ratio )
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.textureLoader =  new THREE.TextureLoader();
 
-
-    this.renderer.setSize(width, height);
-    this.mount.appendChild(this.renderer.domElement);
     this.initializeOrbits();
     this.initializeCamera();
+    this.renderer.setSize(width, height);
+    this.mount.appendChild(this.renderer.domElement);
 
-    var texture = new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/crate.gif');
-    // var material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
-    var material = new THREE.MeshBasicMaterial({ map: texture});
-    const geometry = new THREE.BoxGeometry( 1, 1, 1 ); // change this and you will get rectangle
-    
-    this.cube= new THREE.Mesh( geometry, material );
-    this.scene.add( this.cube );
+    this.cubes = [];
+    for (let i in [0,1,2,3,4]) {
+      var texture = this.textureLoader.load(randomTexture());
+      // var material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+      var material = new THREE.MeshBasicMaterial({ map: texture});
+      const geometry = new THREE.BoxGeometry( 1, 1, 1 ); // change this and you will get rectangle
+      
+      this.cubes[i] = new THREE.Mesh( geometry, material );
+      this.cubes[i].direction = Math.round(Math.random());
+      this.cubes[i].position.x = i// + (i*0.0001);
+      this.cubes[i].position.y = i// + (i*0.0001);
+      this.cubes[i].position.z = i// + (i*0.0001);
+      this.scene.add( this.cubes[i] );
+    }
+
+
     this.animate(this);
   }
   componentWillUnmount() {
@@ -41,14 +62,28 @@ class ThreeComp extends Component {
   initializeCamera = () => {
     this.camera.position.x = 0;
     this.camera.position.y = 0;
-    this.camera.position.z = 4;
+    this.camera.position.z = 7;
   }
 
   animate = () => {
     this.frameId = window.requestAnimationFrame(this.animate);
     this.renderer.render(this.scene, this.camera);
-    this.cube.rotation.x += 0.01;     
-    this.cube.rotation.y += 0.01;
+    const date = Date.now() * 0.001;
+    
+    for (let i = 0; i < this.cubes.length; i++) {
+      this.cubes[i].position.y = Math.cos(date) * i;
+      this.cubes[i].position.x = Math.sin(date) * i;
+
+      if (this.cubes[i].direction === 0) {
+        this.cubes[i].rotation.x += 0.01;
+        this.cubes[i].rotation.y += 0.01;
+        this.cubes[i].rotation.z += 0.01;
+      } else {
+        this.cubes[i].rotation.x -= 0.01;
+        this.cubes[i].rotation.y -= 0.01;
+        this.cubes[i].rotation.z -= 0.01;
+      }
+    }
   }
 
   render() {
